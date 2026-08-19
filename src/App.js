@@ -6,6 +6,7 @@ import ThreadAdmin from './components/ThreadAdmin';
 import Lobby from './components/Lobby';
 import { hasSupabase, playerEmail, supabase } from './services/supabaseClient';
 import Auth from './components/Auth';
+import StoryAdmin from './components/StoryAdmin';
 
 const { cards, bikes, avatars, skins, achievements, stories, nodes } = gameData;
 const lookup = (type, id, catalog = gameData) => ({ card: catalog.cards, bike: catalog.bikes, avatar: catalog.avatars, skin: catalog.skins, achievement: catalog.achievements }[type] || []).find((item) => item.id === id);
@@ -14,10 +15,10 @@ const Rarity = ({ value }) => <span className={`rarity ${value}`}>{({ common: 'C
 function App() {
   const [progress, setProgress] = useState(getProgress);
   const [customContent, setCustomContent] = useState(getCustomContent);
-  const screenFromPath = () => { const path = window.location.pathname.replace(/\/$/, ''); return path === '/admin/hilos' ? 'threads' : path === '/admin' ? 'admin' : 'home'; };
+  const screenFromPath = () => { const path = window.location.pathname.replace(/\/$/, ''); return path === '/admin/hilos' ? 'threads' : path === '/admin/historia' ? 'story-admin' : path === '/admin' ? 'admin' : 'home'; };
   const [screen, setScreenState] = useState(screenFromPath);
   const [pendingChoice, setPendingChoice] = useState(null);
-  const setScreen = (next) => { window.history.pushState({}, '', next === 'admin' ? '/admin' : next === 'threads' ? '/admin/hilos' : '/'); setScreenState(next); };
+  const setScreen = (next) => { window.history.pushState({}, '', next === 'admin' ? '/admin' : next === 'threads' ? '/admin/hilos' : next === 'story-admin' ? '/admin/historia' : '/'); setScreenState(next); };
   useEffect(() => { const onPopState = () => setScreenState(screenFromPath()); window.addEventListener('popstate', onPopState); return () => window.removeEventListener('popstate', onPopState); }, []);
   const [tab, setTab] = useState('cards');
   const [nodeId, setNodeId] = useState(null);
@@ -29,6 +30,7 @@ function App() {
     return { ...gameData, cards: merge('cards', cards), bikes: merge('bikes', bikes), avatars: merge('avatars', avatars), skins: merge('skins', skins) };
   }, [customContent]);
   const find = (type, id) => lookup(type, id, catalog);
+  const activeNodes = useMemo(() => Object.fromEntries(Object.entries(nodes).map(([id, node]) => [id, { ...node, ...(customContent.storyOverrides[id] || {}), choices: (customContent.storyOverrides[id]?.choices || node.choices) }])), [customContent]);
   const level = getLevel(progress.xp);
   const equippedBike = find('bike', progress.equipped.bike) || bikes[0];
   const equippedAvatar = find('avatar', progress.equipped.avatar) || avatars[0];
@@ -61,8 +63,8 @@ function App() {
   const completeAuth = (details) => { const next = { ...progress, ...details, registered: true }; persist(next); if (pendingChoice) { const choice = pendingChoice; setPendingChoice(null); setScreen('play'); executeChoice(choice, next); } else setScreen('home'); };
   const equip = (type, id) => { const next = { ...progress, equipped: { ...progress.equipped, [type]: id } }; persist(next); setToast('Equipado correctamente'); };
   const toggleCard = (id) => { const selected = progress.equipped.cards || []; const cardsForRun = selected.includes(id) ? selected.filter((card) => card !== id) : selected.length < 3 ? [...selected, id] : selected; if (cardsForRun.length === selected.length && !selected.includes(id)) setToast('Podés equipar hasta 3 cartas por partida'); else { persist({ ...progress, equipped: { ...progress.equipped, cards: cardsForRun } }); setToast(selected.includes(id) ? 'Carta quitada de la partida' : 'Carta equipada para la partida'); } };
-  const finish = () => { const node = nodes[nodeId]; const alreadySaved = progress.completedStories.includes('circuit') && progress.achievements.includes('first-lap'); if (alreadySaved) return node; const next = { ...progress, completedStories: [...new Set([...progress.completedStories, 'circuit'])] }; if (!next.achievements.includes('first-lap')) next.achievements = [...next.achievements, 'first-lap']; persist(next); return node; };
-  const current = nodeId ? nodes[nodeId] : null;
+  const finish = () => { const node = activeNodes[nodeId]; const alreadySaved = progress.completedStories.includes('circuit') && progress.achievements.includes('first-lap'); if (alreadySaved) return node; const next = { ...progress, completedStories: [...new Set([...progress.completedStories, 'circuit'])] }; if (!next.achievements.includes('first-lap')) next.achievements = [...next.achievements, 'first-lap']; persist(next); return node; };
+  const current = nodeId ? activeNodes[nodeId] : null;
 
   return <main className="app-shell">
     <div className="bg-grid" /><div className="glow glow-one" /><div className="glow glow-two" />
@@ -73,8 +75,9 @@ function App() {
     {screen === 'lobby' && <Lobby progress={progress} catalog={catalog} bike={equippedBike} avatar={equippedAvatar} copilot={equippedCopilot} lobbyImage={customContent.lobbyImage} back={() => setScreen('home')} start={startFromLobby} equip={equip} toggleCard={toggleCard} />}
     {screen === 'collection' && <Collection progress={progress} tab={tab} setTab={setTab} equip={equip} back={() => setScreen('home')} catalog={catalog} />}
     {screen === 'profile' && <Profile progress={progress} level={level} bike={equippedBike} avatar={equippedAvatar} back={() => setScreen('home')} admin={() => setScreen('admin')} reset={() => { persist(resetProgress()); setToast('Progreso de demo reiniciado'); }} />}
-    {screen === 'admin' && <><div className="admin-quick"><button onClick={() => setScreen('threads')}>✦ ADMINISTRAR HILOS</button></div><Admin customContent={customContent} setCustomContent={setCustomContent} catalog={catalog} progress={progress} persist={persist} back={() => setScreen('profile')} notify={setToast} /></>}
+    {screen === 'admin' && <><div className="admin-quick"><button onClick={() => setScreen('threads')}>✦ ADMINISTRAR HILOS</button><button onClick={() => setScreen('story-admin')}>▣ EDITAR HISTORIA BASE</button></div><Admin customContent={customContent} setCustomContent={setCustomContent} catalog={catalog} progress={progress} persist={persist} back={() => setScreen('profile')} notify={setToast} /></>}
     {screen === 'threads' && <ThreadAdmin customContent={customContent} setCustomContent={setCustomContent} catalog={catalog} back={() => setScreen('admin')} notify={setToast} />}
+    {screen === 'story-admin' && <StoryAdmin customContent={customContent} setCustomContent={setCustomContent} nodes={activeNodes} back={() => setScreen('admin')} notify={setToast} />}
     {screen === 'thread-play' && <ThreadPlay state={threadPlay} registered={progress.registered} auth={() => setScreen('auth')} continueGame={start} home={() => setScreen('home')} />}
     {screen === 'play' && current && (current.ending ? <Ending node={finish()} run={run} replay={start} home={() => setScreen('home')} lookupItem={find} /> : <StoryNode node={current} progress={playProgress} choose={choose} home={() => setScreen('home')} />)}
   </main>;

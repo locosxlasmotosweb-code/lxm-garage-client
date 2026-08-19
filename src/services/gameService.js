@@ -8,7 +8,7 @@ export const getProgress = () => { try { const saved = JSON.parse(localStorage.g
 export const saveProgress = (progress) => localStorage.setItem(KEY, JSON.stringify(progress));
 export const resetProgress = () => { localStorage.removeItem(KEY); return defaultProgress; };
 export const getCustomContent = () => {
-  const empty = { cards: [], bikes: [], avatars: [], skins: [], threads: [], overrides: { cards: {}, bikes: {}, avatars: {}, skins: {} }, deleted: { cards: [], bikes: [], avatars: [], skins: [] }, lobbyImage: '' };
+  const empty = { cards: [], bikes: [], avatars: [], skins: [], threads: [], storyOverrides: {}, overrides: { cards: {}, bikes: {}, avatars: {}, skins: {} }, deleted: { cards: [], bikes: [], avatars: [], skins: [] }, lobbyImage: '' };
   try {
     const saved = JSON.parse(localStorage.getItem(CONTENT_KEY));
     return { ...empty, ...saved, overrides: { ...empty.overrides, ...(saved.overrides || {}) }, deleted: { ...empty.deleted, ...(saved.deleted || {}) } };
