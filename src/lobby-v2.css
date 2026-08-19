@@ -1,0 +1,1 @@
+.workshop.workshop-three{grid-template-columns:1fr 1fr 1fr 1.25fr}.lobby-selectors.lobby-three-selectors{grid-template-columns:repeat(3,1fr)}@media(max-width:740px){.workshop.workshop-three{grid-template-columns:1fr 1fr}.workshop.workshop-three .workshop-center{grid-column:1/-1;grid-row:1}.lobby-selectors.lobby-three-selectors{grid-template-columns:1fr}}
