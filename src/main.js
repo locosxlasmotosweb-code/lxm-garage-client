@@ -11,5 +11,6 @@ import './admin-v2.css';
 import './threads.css';
 import './story-admin.css';
 import './narrative-admin.css';
+import './credits.css';
 
 createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>);
