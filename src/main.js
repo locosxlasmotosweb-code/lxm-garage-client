@@ -10,5 +10,6 @@ import './lobby-v2.css';
 import './admin-v2.css';
 import './threads.css';
 import './story-admin.css';
+import './narrative-admin.css';
 
 createRoot(document.getElementById('root')).render(<React.StrictMode><App /></React.StrictMode>);

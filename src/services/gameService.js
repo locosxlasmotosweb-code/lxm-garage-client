@@ -1,5 +1,6 @@
 import { cards, bikes, avatars, skins, achievements } from '../data/catalog';
 import { stories, nodes } from '../data/stories';
+import { freeCircuitStory } from '../data/narrativeDemo';
 
 const KEY = 'lxm-game-progress-v1';
 const CONTENT_KEY = 'lxm-game-custom-content-v1';
@@ -8,10 +9,10 @@ export const getProgress = () => { try { const saved = JSON.parse(localStorage.g
 export const saveProgress = (progress) => localStorage.setItem(KEY, JSON.stringify(progress));
 export const resetProgress = () => { localStorage.removeItem(KEY); return defaultProgress; };
 export const getCustomContent = () => {
-  const empty = { cards: [], bikes: [], avatars: [], skins: [], threads: [], storyOverrides: {}, overrides: { cards: {}, bikes: {}, avatars: {}, skins: {} }, deleted: { cards: [], bikes: [], avatars: [], skins: [] }, lobbyImage: '' };
+  const empty = { cards: [], bikes: [], avatars: [], skins: [], threads: [], narrativeStories: [freeCircuitStory], storyOverrides: {}, overrides: { cards: {}, bikes: {}, avatars: {}, skins: {} }, deleted: { cards: [], bikes: [], avatars: [], skins: [] }, lobbyImage: '' };
   try {
     const saved = JSON.parse(localStorage.getItem(CONTENT_KEY));
-    return { ...empty, ...saved, overrides: { ...empty.overrides, ...(saved.overrides || {}) }, deleted: { ...empty.deleted, ...(saved.deleted || {}) } };
+    return { ...empty, ...saved, narrativeStories: saved.narrativeStories?.length ? saved.narrativeStories : empty.narrativeStories, overrides: { ...empty.overrides, ...(saved.overrides || {}) }, deleted: { ...empty.deleted, ...(saved.deleted || {}) } };
   } catch { return empty; }
 };
 export const saveCustomContent = (content) => {
